@@ -1,0 +1,27 @@
+service: persona-java-serverless
+
+provider:
+  name: aws
+  runtime: java17
+  region: us-east-1
+  stage: dev
+  memorySize: 512
+  timeout: 30
+
+package:
+  artifact: build/libs/Persona-serverless.jar
+
+functions:
+  getUsuarios:
+    handler: com.example.persona.serverless.GetUsersHandler::handleRequest
+    events:
+      - http:
+          path: usuarios/{id}
+          method: get
+
+  createUsuario:
+    handler: com.example.persona.serverless.CreateUsuarioHandler::handleRequest
+    events:
+      - http:
+          path: usuarios
+          method: post
