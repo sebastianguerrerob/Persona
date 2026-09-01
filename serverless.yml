@@ -7,6 +7,16 @@ provider:
   stage: dev
   memorySize: 512
   timeout: 30
+  environment:
+    TABLE_NAME: personas
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+          Resource: arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personas
 
 package:
   artifact: build/libs/Persona-serverless.jar

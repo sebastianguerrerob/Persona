@@ -11,6 +11,23 @@
       "stage": "dev",
       "memorySize": 512,
       "timeout": 30,
+      "environment": {
+        "TABLE_NAME": "personas"
+      },
+      "iam": {
+        "role": {
+          "statements": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:PutItem"
+              ],
+              "Resource": "arn:aws:dynamodb:us-east-1:222238779435:table/personas"
+            }
+          ]
+        }
+      },
       "versionFunctions": true,
       "compiledCloudFormationTemplate": {
         "AWSTemplateFormatVersion": "2010-09-09",
@@ -154,6 +171,9 @@
                             "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/persona-java-serverless-dev*:*:*"
                           }
                         ]
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iam\"][\"role\"][\"statements\"][0]"
                       }
                     ]
                   }
@@ -182,13 +202,18 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/persona-java-serverless/dev/1788275748994-2026-09-01T15:15:48.994Z/build/libs/Persona-serverless.jar"
+                "S3Key": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z/build/libs/Persona-serverless.jar"
               },
               "Handler": "com.example.persona.serverless.GetUsersHandler::handleRequest",
               "Runtime": "java17",
               "FunctionName": "persona-java-serverless-dev-getUsuarios",
               "MemorySize": 512,
               "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "TABLE_NAME": "personas"
+                }
+              },
               "Role": {
                 "Fn::GetAtt": [
                   "IamRoleLambdaExecution",
@@ -207,13 +232,18 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/persona-java-serverless/dev/1788275748994-2026-09-01T15:15:48.994Z/build/libs/Persona-serverless.jar"
+                "S3Key": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z/build/libs/Persona-serverless.jar"
               },
               "Handler": "com.example.persona.serverless.CreateUsuarioHandler::handleRequest",
               "Runtime": "java17",
               "FunctionName": "persona-java-serverless-dev-createUsuario",
               "MemorySize": 512,
               "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "TABLE_NAME": "personas"
+                }
+              },
               "Role": {
                 "Fn::GetAtt": [
                   "IamRoleLambdaExecution",
@@ -225,24 +255,24 @@
               "CreateUsuarioLogGroup"
             ]
           },
-          "GetUsuariosLambdaVersion0mRY1j3TmVygcf2l9GRvULISjwAFb7XhIQ8NVhQrBg": {
+          "GetUsuariosLambdaVersionCecajCcJToSs4lCOTDJ4BGqcjhQiKsXeFcHoj1e4Fo8": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetUsuariosLambdaFunction"
               },
-              "CodeSha256": "zhfg71TtrCEYZc+uENdSRrw/kIt4wttUBhX0mujFnJU="
+              "CodeSha256": "oYrQsbTBfjA3oqdoy5cwIYGRy4D9T+VdN4cd9NZEyvc="
             }
           },
-          "CreateUsuarioLambdaVersionXJpIhXLPJuTZVNq7kQCqYEgoC3CfsidoES0JWr9lPos": {
+          "CreateUsuarioLambdaVersion66dSKe6NVAJHKBnMRwTyQn0Nj6F3uWk8uFQQWPnCsKk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUsuarioLambdaFunction"
               },
-              "CodeSha256": "zhfg71TtrCEYZc+uENdSRrw/kIt4wttUBhX0mujFnJU="
+              "CodeSha256": "oYrQsbTBfjA3oqdoy5cwIYGRy4D9T+VdN4cd9NZEyvc="
             }
           },
           "ApiGatewayRestApi": {
@@ -376,7 +406,7 @@
               "CreateUsuarioLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1788275739551": {
+          "ApiGatewayDeployment1788279708758": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -476,7 +506,7 @@
           "GetUsuariosLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetUsuariosLambdaVersion0mRY1j3TmVygcf2l9GRvULISjwAFb7XhIQ8NVhQrBg"
+              "Ref": "GetUsuariosLambdaVersionCecajCcJToSs4lCOTDJ4BGqcjhQiKsXeFcHoj1e4Fo8"
             },
             "Export": {
               "Name": "sls-persona-java-serverless-dev-GetUsuariosLambdaFunctionQualifiedArn"
@@ -485,7 +515,7 @@
           "CreateUsuarioLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUsuarioLambdaVersionXJpIhXLPJuTZVNq7kQCqYEgoC3CfsidoES0JWr9lPos"
+              "Ref": "CreateUsuarioLambdaVersion66dSKe6NVAJHKBnMRwTyQn0Nj6F3uWk8uFQQWPnCsKk"
             },
             "Export": {
               "Name": "sls-persona-java-serverless-dev-CreateUsuarioLambdaFunctionQualifiedArn"
@@ -622,7 +652,7 @@
         "timeout": 30,
         "runtime": "java17",
         "vpc": {},
-        "versionLogicalId": "GetUsuariosLambdaVersion0mRY1j3TmVygcf2l9GRvULISjwAFb7XhIQ8NVhQrBg"
+        "versionLogicalId": "GetUsuariosLambdaVersionCecajCcJToSs4lCOTDJ4BGqcjhQiKsXeFcHoj1e4Fo8"
       },
       "createUsuario": {
         "handler": "com.example.persona.serverless.CreateUsuarioHandler::handleRequest",
@@ -641,7 +671,7 @@
         "timeout": 30,
         "runtime": "java17",
         "vpc": {},
-        "versionLogicalId": "CreateUsuarioLambdaVersionXJpIhXLPJuTZVNq7kQCqYEgoC3CfsidoES0JWr9lPos"
+        "versionLogicalId": "CreateUsuarioLambdaVersion66dSKe6NVAJHKBnMRwTyQn0Nj6F3uWk8uFQQWPnCsKk"
       }
     },
     "configValidationMode": "warn",
@@ -654,7 +684,7 @@
       "package": {
         "artifact": "build/libs/Persona-serverless.jar",
         "artifactsS3KeyDirname": "serverless/persona-java-serverless/dev/code-artifacts",
-        "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788275748994-2026-09-01T15:15:48.994Z"
+        "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -664,7 +694,7 @@
     "isDashboardMonitoringPreconfigured": false
   },
   "package": {
-    "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788275748994-2026-09-01T15:15:48.994Z",
+    "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z",
     "artifact": "build/libs/Persona-serverless.jar"
   }
 }
