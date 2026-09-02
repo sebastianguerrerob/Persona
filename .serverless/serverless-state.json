@@ -12,20 +12,12 @@
       "memorySize": 512,
       "timeout": 30,
       "environment": {
-        "TABLE_NAME": "personas"
-      },
-      "iam": {
-        "role": {
-          "statements": [
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:GetItem",
-                "dynamodb:PutItem"
-              ],
-              "Resource": "arn:aws:dynamodb:us-east-1:222238779435:table/personas"
-            }
-          ]
+        "TABLE_NAME": "personas",
+        "QUEUE_URL": {
+          "Ref": "UsuarioCreadoQueue"
+        },
+        "TOPIC_ARN": {
+          "Ref": "UsuarioCreadoTopic"
         }
       },
       "versionFunctions": true,
@@ -114,6 +106,12 @@
               "LogGroupName": "/aws/lambda/persona-java-serverless-dev-createUsuario"
             }
           },
+          "EnviarCorreosLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/persona-java-serverless-dev-enviarCorreos"
+            }
+          },
           "IamRoleLambdaExecution": {
             "Type": "AWS::IAM::Role",
             "Properties": {
@@ -173,7 +171,20 @@
                         ]
                       },
                       {
-                        "$ref": "$[\"service\"][\"provider\"][\"iam\"][\"role\"][\"statements\"][0]"
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::GetAtt": [
+                              "UsuarioCreadoQueue",
+                              "Arn"
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -202,7 +213,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z/build/libs/Persona-serverless.jar"
+                "S3Key": "serverless/persona-java-serverless/dev/1788282361856-2026-09-01T17:06:01.856Z/build/libs/Persona-serverless.jar"
               },
               "Handler": "com.example.persona.serverless.GetUsersHandler::handleRequest",
               "Runtime": "java17",
@@ -211,17 +222,24 @@
               "Timeout": 30,
               "Environment": {
                 "Variables": {
-                  "TABLE_NAME": "personas"
+                  "TABLE_NAME": "personas",
+                  "QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"QUEUE_URL\"]"
+                  },
+                  "TOPIC_ARN": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"TOPIC_ARN\"]"
+                  }
                 }
               },
               "Role": {
                 "Fn::GetAtt": [
-                  "IamRoleLambdaExecution",
+                  "GetUsuariosIamRoleLambdaExecution",
                   "Arn"
                 ]
               }
             },
             "DependsOn": [
+              "GetUsuariosIamRoleLambdaExecution",
               "GetUsuariosLogGroup"
             ]
           },
@@ -232,7 +250,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z/build/libs/Persona-serverless.jar"
+                "S3Key": "serverless/persona-java-serverless/dev/1788282361856-2026-09-01T17:06:01.856Z/build/libs/Persona-serverless.jar"
               },
               "Handler": "com.example.persona.serverless.CreateUsuarioHandler::handleRequest",
               "Runtime": "java17",
@@ -241,38 +259,92 @@
               "Timeout": 30,
               "Environment": {
                 "Variables": {
-                  "TABLE_NAME": "personas"
+                  "TABLE_NAME": "personas",
+                  "QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"QUEUE_URL\"]"
+                  },
+                  "TOPIC_ARN": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"TOPIC_ARN\"]"
+                  }
                 }
               },
               "Role": {
                 "Fn::GetAtt": [
-                  "IamRoleLambdaExecution",
+                  "CreateUsuarioIamRoleLambdaExecution",
                   "Arn"
                 ]
               }
             },
             "DependsOn": [
+              "CreateUsuarioIamRoleLambdaExecution",
               "CreateUsuarioLogGroup"
             ]
           },
-          "GetUsuariosLambdaVersionCecajCcJToSs4lCOTDJ4BGqcjhQiKsXeFcHoj1e4Fo8": {
+          "EnviarCorreosLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/persona-java-serverless/dev/1788282361856-2026-09-01T17:06:01.856Z/build/libs/Persona-serverless.jar"
+              },
+              "Handler": "com.example.persona.serverless.EnviarCorreosHandler::handleRequest",
+              "Runtime": "java17",
+              "FunctionName": "persona-java-serverless-dev-enviarCorreos",
+              "MemorySize": 512,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "TABLE_NAME": "personas",
+                  "QUEUE_URL": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"QUEUE_URL\"]"
+                  },
+                  "TOPIC_ARN": {
+                    "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"TOPIC_ARN\"]"
+                  }
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "EnviarCorreosIamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "EnviarCorreosIamRoleLambdaExecution",
+              "EnviarCorreosLogGroup"
+            ]
+          },
+          "GetUsuariosLambdaVersionKQGsCh6oxFYyiTgioMWGkfvMLlXyMRzOxfdceqVY": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetUsuariosLambdaFunction"
               },
-              "CodeSha256": "oYrQsbTBfjA3oqdoy5cwIYGRy4D9T+VdN4cd9NZEyvc="
+              "CodeSha256": "MdgjCmQ9gP2olLGIO4TcOEWjNn2AIw84effAHzBhuuc="
             }
           },
-          "CreateUsuarioLambdaVersion66dSKe6NVAJHKBnMRwTyQn0Nj6F3uWk8uFQQWPnCsKk": {
+          "CreateUsuarioLambdaVersiontq1F0Wjl3srL3vsaRpKspihrvRy7X2hhoYLqtWcTVrM": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUsuarioLambdaFunction"
               },
-              "CodeSha256": "oYrQsbTBfjA3oqdoy5cwIYGRy4D9T+VdN4cd9NZEyvc="
+              "CodeSha256": "MdgjCmQ9gP2olLGIO4TcOEWjNn2AIw84effAHzBhuuc="
+            }
+          },
+          "EnviarCorreosLambdaVersionHXuVPmRvzuFLhBxN0DcSsuCADAJCfyQmV7tTXOmrWI": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "EnviarCorreosLambdaFunction"
+              },
+              "CodeSha256": "MdgjCmQ9gP2olLGIO4TcOEWjNn2AIw84effAHzBhuuc="
             }
           },
           "ApiGatewayRestApi": {
@@ -406,7 +478,7 @@
               "CreateUsuarioLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1788279708758": {
+          "ApiGatewayDeployment1788282359478": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -492,6 +564,308 @@
                 ]
               }
             }
+          },
+          "EnviarCorreosEventSourceMappingSQSUsuarioCreadoQueue": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn": "EnviarCorreosIamRoleLambdaExecution",
+            "Properties": {
+              "BatchSize": 1,
+              "EventSourceArn": {
+                "Fn::GetAtt": [
+                  "UsuarioCreadoQueue",
+                  "Arn"
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "EnviarCorreosLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Enabled": true
+            }
+          },
+          "GetUsuariosIamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "persona-java-serverless",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/persona-java-serverless-dev-getUsuarios:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "dynamodb:GetItem"
+                        ],
+                        "Resource": "arn:aws:dynamodb:us-east-1:222238779435:table/personas"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "persona-java-serverless",
+                    "dev",
+                    "getUsuarios",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              },
+              "ManagedPolicyArns": []
+            }
+          },
+          "CreateUsuarioIamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "persona-java-serverless",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/persona-java-serverless-dev-createUsuario:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "dynamodb:PutItem"
+                        ],
+                        "Resource": "arn:aws:dynamodb:us-east-1:222238779435:table/personas"
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:SendMessage"
+                        ],
+                        "Resource": {
+                          "Fn::GetAtt": [
+                            "UsuarioCreadoQueue",
+                            "Arn"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "persona-java-serverless",
+                    "dev",
+                    "createUsuario",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              },
+              "ManagedPolicyArns": []
+            }
+          },
+          "EnviarCorreosIamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "persona-java-serverless",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/persona-java-serverless-dev-enviarCorreos:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": [
+                          {
+                            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"IamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][2][\"Resource\"][0]"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sqs:ReceiveMessage",
+                          "sqs:DeleteMessage",
+                          "sqs:GetQueueAttributes"
+                        ],
+                        "Resource": {
+                          "Fn::GetAtt": [
+                            "UsuarioCreadoQueue",
+                            "Arn"
+                          ]
+                        }
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "sns:Publish"
+                        ],
+                        "Resource": {
+                          "Ref": "UsuarioCreadoTopic"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "persona-java-serverless",
+                    "dev",
+                    "enviarCorreos",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              },
+              "ManagedPolicyArns": []
+            }
+          },
+          "UsuarioCreadoQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+              "QueueName": "usuario-creado-queue",
+              "VisibilityTimeout": 30
+            }
+          },
+          "UsuarioCreadoTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+              "TopicName": "usuario-creado-topic"
+            }
           }
         },
         "Outputs": {
@@ -506,7 +880,7 @@
           "GetUsuariosLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetUsuariosLambdaVersionCecajCcJToSs4lCOTDJ4BGqcjhQiKsXeFcHoj1e4Fo8"
+              "Ref": "GetUsuariosLambdaVersionKQGsCh6oxFYyiTgioMWGkfvMLlXyMRzOxfdceqVY"
             },
             "Export": {
               "Name": "sls-persona-java-serverless-dev-GetUsuariosLambdaFunctionQualifiedArn"
@@ -515,10 +889,19 @@
           "CreateUsuarioLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUsuarioLambdaVersion66dSKe6NVAJHKBnMRwTyQn0Nj6F3uWk8uFQQWPnCsKk"
+              "Ref": "CreateUsuarioLambdaVersiontq1F0Wjl3srL3vsaRpKspihrvRy7X2hhoYLqtWcTVrM"
             },
             "Export": {
               "Name": "sls-persona-java-serverless-dev-CreateUsuarioLambdaFunctionQualifiedArn"
+            }
+          },
+          "EnviarCorreosLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "EnviarCorreosLambdaVersionHXuVPmRvzuFLhBxN0DcSsuCADAJCfyQmV7tTXOmrWI"
+            },
+            "Export": {
+              "Name": "sls-persona-java-serverless-dev-EnviarCorreosLambdaFunctionQualifiedArn"
             }
           },
           "ServiceEndpoint": {
@@ -633,6 +1016,13 @@
       },
       "vpc": {}
     },
+    "custom": {
+      "queueName": "usuario-creado-queue",
+      "topicName": "usuario-creado-topic"
+    },
+    "plugins": [
+      "serverless-iam-roles-per-function"
+    ],
     "pluginsData": {},
     "functions": {
       "getUsuarios": {
@@ -646,13 +1036,18 @@
             }
           }
         ],
+        "iamRoleStatements": [
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"GetUsuariosIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][1]"
+          }
+        ],
         "name": "persona-java-serverless-dev-getUsuarios",
         "package": {},
         "memory": 512,
         "timeout": 30,
         "runtime": "java17",
         "vpc": {},
-        "versionLogicalId": "GetUsuariosLambdaVersionCecajCcJToSs4lCOTDJ4BGqcjhQiKsXeFcHoj1e4Fo8"
+        "versionLogicalId": "GetUsuariosLambdaVersionKQGsCh6oxFYyiTgioMWGkfvMLlXyMRzOxfdceqVY"
       },
       "createUsuario": {
         "handler": "com.example.persona.serverless.CreateUsuarioHandler::handleRequest",
@@ -665,26 +1060,89 @@
             }
           }
         ],
+        "iamRoleStatements": [
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"CreateUsuarioIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][1]"
+          },
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"CreateUsuarioIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][2]"
+          }
+        ],
         "name": "persona-java-serverless-dev-createUsuario",
         "package": {},
         "memory": 512,
         "timeout": 30,
         "runtime": "java17",
         "vpc": {},
-        "versionLogicalId": "CreateUsuarioLambdaVersion66dSKe6NVAJHKBnMRwTyQn0Nj6F3uWk8uFQQWPnCsKk"
+        "versionLogicalId": "CreateUsuarioLambdaVersiontq1F0Wjl3srL3vsaRpKspihrvRy7X2hhoYLqtWcTVrM"
+      },
+      "enviarCorreos": {
+        "handler": "com.example.persona.serverless.EnviarCorreosHandler::handleRequest",
+        "events": [
+          {
+            "sqs": {
+              "arn": {
+                "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"IamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][2][\"Resource\"][0]"
+              },
+              "batchSize": 1
+            }
+          }
+        ],
+        "iamRoleStatements": [
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"EnviarCorreosIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][2]"
+          },
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"EnviarCorreosIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][3]"
+          }
+        ],
+        "name": "persona-java-serverless-dev-enviarCorreos",
+        "package": {},
+        "memory": 512,
+        "timeout": 30,
+        "runtime": "java17",
+        "vpc": {},
+        "versionLogicalId": "EnviarCorreosLambdaVersionHXuVPmRvzuFLhBxN0DcSsuCADAJCfyQmV7tTXOmrWI"
       }
+    },
+    "resources": {
+      "Resources": {
+        "UsuarioCreadoQueue": {
+          "Type": "AWS::SQS::Queue",
+          "Properties": {
+            "QueueName": "usuario-creado-queue",
+            "VisibilityTimeout": 30
+          }
+        },
+        "UsuarioCreadoTopic": {
+          "Type": "AWS::SNS::Topic",
+          "Properties": {
+            "TopicName": "usuario-creado-topic"
+          }
+        }
+      },
+      "Outputs": {}
     },
     "configValidationMode": "warn",
     "serviceFilename": "serverless.yml",
     "initialServerlessConfig": {
       "service": "persona-java-serverless",
+      "plugins": {
+        "$ref": "$[\"service\"][\"plugins\"]"
+      },
+      "custom": {
+        "$ref": "$[\"service\"][\"custom\"]"
+      },
       "provider": {
         "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
       },
       "package": {
         "artifact": "build/libs/Persona-serverless.jar",
         "artifactsS3KeyDirname": "serverless/persona-java-serverless/dev/code-artifacts",
-        "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z"
+        "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788282361856-2026-09-01T17:06:01.856Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -694,7 +1152,7 @@
     "isDashboardMonitoringPreconfigured": false
   },
   "package": {
-    "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788279710978-2026-09-01T16:21:50.978Z",
+    "artifactDirectoryName": "serverless/persona-java-serverless/dev/1788282361856-2026-09-01T17:06:01.856Z",
     "artifact": "build/libs/Persona-serverless.jar"
   }
 }

@@ -1,5 +1,12 @@
 service: persona-java-serverless
 
+plugins:
+  - serverless-iam-roles-per-function
+
+custom:
+  queueName: usuario-creado-queue
+  topicName: usuario-creado-topic
+
 provider:
   name: aws
   runtime: java17
@@ -9,14 +16,20 @@ provider:
   timeout: 30
   environment:
     TABLE_NAME: personas
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-          Resource: arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personas
+    QUEUE_URL: { Ref: UsuarioCreadoQueue }
+    TOPIC_ARN: { Ref: UsuarioCreadoTopic }
+
+resources:
+  Resources:
+    UsuarioCreadoQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.queueName}
+        VisibilityTimeout: 30
+    UsuarioCreadoTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:custom.topicName}
 
 package:
   artifact: build/libs/Persona-serverless.jar
@@ -28,6 +41,11 @@ functions:
       - http:
           path: usuarios/{id}
           method: get
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personas
 
   createUsuario:
     handler: com.example.persona.serverless.CreateUsuarioHandler::handleRequest
@@ -35,3 +53,30 @@ functions:
       - http:
           path: usuarios
           method: post
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:${aws:accountId}:table/personas
+      - Effect: Allow
+        Action:
+          - sqs:SendMessage
+        Resource: !GetAtt UsuarioCreadoQueue.Arn
+
+  enviarCorreos:
+    handler: com.example.persona.serverless.EnviarCorreosHandler::handleRequest
+    events:
+      - sqs:
+          arn: !GetAtt UsuarioCreadoQueue.Arn
+          batchSize: 1
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+        Resource: !GetAtt UsuarioCreadoQueue.Arn
+      - Effect: Allow
+        Action:
+          - sns:Publish
+        Resource: !Ref UsuarioCreadoTopic

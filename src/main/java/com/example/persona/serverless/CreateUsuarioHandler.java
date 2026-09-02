@@ -8,6 +8,8 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +17,11 @@ import java.util.Map;
 public class CreateUsuarioHandler implements RequestHandler<Map<String, Object>, ApiGatewayResponse> {
 
     private static final String TABLE_NAME = System.getenv().getOrDefault("TABLE_NAME", "personas");
+    private static final String QUEUE_URL = System.getenv().getOrDefault("QUEUE_URL", "");
     private static final DynamoDbClient DYNAMO_DB = DynamoDbClient.builder()
+            .region(Region.US_EAST_1)
+            .build();
+    private static final SqsClient SQS_CLIENT = SqsClient.builder()
             .region(Region.US_EAST_1)
             .build();
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -50,6 +56,13 @@ public class CreateUsuarioHandler implements RequestHandler<Map<String, Object>,
                             "email", AttributeValue.fromS(email)
                     ))
                     .build());
+
+            if (!QUEUE_URL.isBlank()) {
+                SQS_CLIENT.sendMessage(SendMessageRequest.builder()
+                        .queueUrl(QUEUE_URL)
+                        .messageBody(OBJECT_MAPPER.writeValueAsString(user))
+                        .build());
+            }
 
             return ApiGatewayResponse.builder()
                     .setStatusCode(201)
