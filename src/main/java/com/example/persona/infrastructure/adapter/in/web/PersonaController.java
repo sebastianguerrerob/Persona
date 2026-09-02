@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/personas")
 @Tag(name = "Personas", description = "Operaciones para guardar y consultar personas")
 public class PersonaController {
 
@@ -28,7 +27,13 @@ public class PersonaController {
         this.personaUseCase = personaUseCase;
     }
 
-    @PostMapping("/guardarpersona")
+    @GetMapping("/health")
+    @Operation(summary = "Health check", description = "Verifica que la API está disponible")
+    public HealthResponse health() {
+        return new HealthResponse("ok");
+    }
+
+    @PostMapping("/api/personas/guardarpersona")
         @Operation(summary = "Guardar persona", description = "Registra una persona con identificacion, nombre y email")
         @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Persona creada"),
@@ -40,7 +45,7 @@ public class PersonaController {
                 .body(PersonaResponse.from(personaUseCase.guardar(persona)));
     }
 
-    @GetMapping("/consultarpersona/{identificacion}")
+    @GetMapping("/api/personas/consultarpersona/{identificacion}")
         @Operation(summary = "Consultar persona", description = "Busca una persona por su numero de identificacion")
         @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Persona encontrada"),
@@ -49,5 +54,8 @@ public class PersonaController {
         public PersonaResponse consultar(@Parameter(description = "Numero de identificacion", example = "123456789")
                          @PathVariable String identificacion) {
         return PersonaResponse.from(personaUseCase.consultar(identificacion));
+    }
+
+    public record HealthResponse(String status) {
     }
 }
